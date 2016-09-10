@@ -1,0 +1,7 @@
+set(_CATKIN_CURRENT_PACKAGE "kinect_test")
+set(kinect_test_MAINTAINER "huanghe <huanghe@todo.todo>")
+set(kinect_test_DEPRECATED "")
+set(kinect_test_VERSION "0.0.0")
+set(kinect_test_BUILD_DEPENDS "python-numpy" "roscpp" "rospy" "rostime" "std_msgs" "sensor_msgs" "message_filters" "image_transport" "compressed_image_transport" "compressed_depth_image_transport" "kinect2_bridge" "libpcl-all-dev" "cv_bridge")
+set(kinect_test_RUN_DEPENDS "python-numpy" "message_runtime" "roscpp" "rospy" "rostime" "std_msgs" "sensor_msgs" "message_filters" "image_transport" "compressed_image_transport" "compressed_depth_image_transport" "libpcl-all-dev" "libpcl-all" "cv_bridge")
+set(kinect_test_BUILDTOOL_DEPENDS "catkin")

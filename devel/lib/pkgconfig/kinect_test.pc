@@ -1,0 +1,8 @@
+prefix=/home/scuak/rmv4/devel
+
+Name: kinect_test
+Description: Description of kinect_test
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/scuak/rmv4/devel/lib 
+Requires: 

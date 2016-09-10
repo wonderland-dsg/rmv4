@@ -1,0 +1,7 @@
+set(_CATKIN_CURRENT_PACKAGE "cone_detector")
+set(cone_detector_MAINTAINER "Ari <aanders@mit.edu>")
+set(cone_detector_DEPRECATED "")
+set(cone_detector_VERSION "0.0.0")
+set(cone_detector_BUILD_DEPENDS "roscpp" "rospy" "std_msgs" "image_transport" "cv_bridge" "sensor_msgs" "geometry_msgs" "message_generation" "std_msgs" "sensor_msgs" "message_filters" "image_transport" "compressed_image_transport" "compressed_depth_image_transport" "kinect2_bridge" "libpcl-all-dev" "cv_bridge")
+set(cone_detector_RUN_DEPENDS "python-numpy" "message_runtime" "roscpp" "rospy" "std_msgs" "image_transport" "sensor_msgs" "cv_bridge" "geometry_msgs" "message_filters" "compressed_image_transport" "compressed_depth_image_transport" "libpcl-all-dev" "libpcl-all")
+set(cone_detector_BUILDTOOL_DEPENDS "catkin")

@@ -1,0 +1,2 @@
+cone_detector:iai_kinect2/iai_kinect2:iai_kinect2/kinect2_bridge:iai_kinect2/kinect2_calibration:iai_kinect2/kinect2_registration:iai_kinect2/kinect2_viewer:kinect_test
+-DCATKIN_DEVEL_PREFIX=/home/scuak/rmv4/devel -DCMAKE_INSTALL_PREFIX=/home/scuak/rmv4/install -G Unix Makefiles

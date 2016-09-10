@@ -1,0 +1,8 @@
+prefix=/home/scuak/rmv4/devel
+
+Name: kinect2_bridge
+Description: Description of kinect2_bridge
+Version: 0.0.1
+Cflags: -I/home/scuak/rmv4/src/iai_kinect2/kinect2_bridge/include
+Libs: -L/home/scuak/rmv4/devel/lib 
+Requires: kinect2_registration

@@ -1,0 +1,6 @@
+<launch>
+
+	<node pkg="cone_detector" type="myserial.py" name="myserial" cwd="node" required="true"  output="screen"/>
+        <node pkg="cone_detector" type="corenode.py" name="corenode" cwd="node" required="true"  />
+	<node pkg="cone_detector" type="detectVideo2.py" name="detectVideo2" cwd="node" />
+</launch>

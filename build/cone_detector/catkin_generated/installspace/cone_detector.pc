@@ -1,0 +1,8 @@
+prefix=/home/scuak/rmv4/install
+
+Name: cone_detector
+Description: Description of cone_detector
+Version: 0.0.0
+Cflags: -I/home/scuak/rmv4/install/include
+Libs: -L/home/scuak/rmv4/install/lib -lcone_detector
+Requires: message_runtime

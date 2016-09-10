@@ -1,0 +1,182 @@
+#!/usr/bin/env python
+
+import roslib
+roslib.load_manifest('kinect_test')
+import rospy
+import cv2
+import mxnet as mx
+from cone_detector.msg import positionFromDetectRGB as pfdg
+import numpy as np
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge, CvBridgeError
+
+def subDetect(img,model):
+    #cv2.imshow("before resize",img)
+    #cv2.waitKey(0)
+    img = cv2.resize(img, (40,30))
+    #cv2.imshow("after resize",img)
+    # cv2.waitKey(0)
+    img = img.astype(np.float32).reshape((1, 1200))/255.0
+    #start=time.clock()
+    prob=model.predict(img)
+    #finish=time.clock()
+    #print "predict time",(finish-start)/10000
+    #print prob[0].argmax()
+    if prob[0].argmax() == 1:
+        return True
+    else:
+        return False
+
+def detectAndDraw(model,cascade,sourceImg,scale,depthImg):
+    t=cv2.getTickCount()
+    colors=[(0, 0, 255),
+		    (0, 128, 255),
+		    (0, 255, 255),
+		    (0, 255, 0),
+		    (255, 128, 0),
+		    (255, 255, 0),
+		    (255, 0, 0),
+		    (255, 0, 255)]
+    gray=cv2.cvtColor(sourceImg,cv2.COLOR_BGR2GRAY)
+    print "gray:",gray.shape
+    rows,cols = gray.shape[:2]
+    smallImg=cv2.resize(gray,
+                         (int(cols/scale),int(rows/scale))
+                         )
+    print "smallImg ",smallImg.shape
+    cv2.equalizeHist(smallImg,smallImg)
+    #|cv.CV_HAAR_SCALE_IMAGE,
+    objects=cascade.detectMultiScale(smallImg,
+                                     1.6,3,0,
+                                     (10,10),(120,120))
+    i=0
+    point_x=[]
+    point_y=[]
+    point_z=[]
+    #img=sourceImg
+    for object in objects:
+        i=i+1
+        x,y,w,h=object
+        color=colors[i%8]
+        roi_smallImg = smallImg[y:y+h, x:x+w]
+
+        #cv2.rectangle(img,(int(x*scale),int(y*scale)),
+                      #(int((x+w)*scale), int((y+h)*scale)),color , 1, 8)
+
+        if subDetect(roi_smallImg,model):
+            cv2.rectangle(sourceImg,(int(x*scale),int(y*scale)),
+                      (int((x+w)*scale), int((y+h)*scale)),color , 1, 8)
+            ox=int((x+w*0.5)*scale)
+            oy=int((y+h*0.5)*scale)
+            point_x.append(ox)
+            point_y.append(oy)
+            print "color:",sourceImg.shape
+            print "depth:",depthImg.shape
+            ox=int(ox*depthImg.shape[0]/sourceImg.shape[0])
+            oy=int(oy*depthImg.shape[1]/sourceImg.shape[1])
+            point_z.append(depthImg[oy][ox])
+
+    sourceImg=cv2.resize(sourceImg,(960,540))
+    t=cv2.getTickCount()-t
+    print "detection time = \n", t / cv2.getTickFrequency()*1000.0," ms"
+
+    return sourceImg,point_x,point_y,point_z
+
+
+
+class image_converter:
+
+    def __init__(self):
+        self.imagetopic = "/kinect2/qhd/image_color_rect"
+        self.depthtopic = "/kinect2/qhd/image_depth_rect"
+        self.bridge = CvBridge()
+        self.image_color_sub = rospy.Subscriber(self.imagetopic, Image, self.image_callback)
+        self.image_depth_sub = rospy.Subscriber(self.depthtopic, Image, self.depth_callback)
+        self.cascade=cv2.CascadeClassifier("/home/scuak/rmv4/src/cone_detector/src/model/xml/xml.xml")
+        self.prefix = "/home/scuak/rmv4/src/cone_detector/src/model/model_use_samples_2V2.0"
+        self.num_round = 200
+        self.model = mx.model.FeedForward.load(self.prefix, self.num_round, ctx=mx.cpu(), numpy_batch_size=1)
+        #roslib.load_manifest('cone_detector')
+	    #rospy.init_node('detectVideo2')
+        self.pub = rospy.Publisher('positionOfRGB', pfdg)
+        self.depth_color=None
+         
+    def image_callback(self, data):
+        try:
+            image_color = self.bridge.imgmsg_to_cv2(data, "bgr8")
+            scale=1.5
+            res,x,y,z=detectAndDraw(self.model,self.cascade,image_color,scale,self.depth_color)
+
+            object=[]
+
+            for i in range(0,len(x)):
+                if len(object)==0:
+                    object.append([i])
+                else:
+                    insert=True
+                    for sub in object:
+                        sum_x=0
+                        sum_y=0
+                        count=0
+                        for point_index in sub:
+                            sum_x=sum_x+x[point_index]
+                            sum_y=sum_y+y[point_index]
+                            count=count+1
+                        point_core_x=sum_x/count
+                        point_core_y=sum_y/count
+                        length=np.sqrt(((x[i]-point_core_x)**2+(y[i]-point_core_y)**2))
+                        if length < 100:
+                            sub.append(i)
+                            insert=False
+                            break
+                    if insert:
+                        object.append([i])
+            for sub in object:
+                sum_x=0
+                sum_y=0
+                count=0
+                for point_index in sub:
+                    sum_x=sum_x+x[point_index]
+                    sum_y=sum_y+y[point_index]
+                    count=count+1
+                point_core_x=sum_x/count
+                point_core_y=sum_y/count
+                px=point_core_x
+                py=point_core_y
+                p=pfdg()
+                p.who=-1
+                p.x=px
+                p.y=py
+                p.z=-1
+                p.flag=-1
+                self.pub.publish(p)
+                cv2.rectangle(res,(int(px),int(py)),
+                      (int(px+120), int(py+120)),(0,255,255) , 5, 8)
+            cv2.imshow("result",res)
+            cv2.waitKey(30)
+            #cv2.imshow("Image window", image_color)
+            #cv2.waitKey(30)
+        except CvBridgeError as e:
+            print(e)
+
+    
+    
+    def depth_callback(self, data):
+        try:
+            self.depth_color = self.bridge.imgmsg_to_cv2(data, "16UC1")
+        except CvBridgeError as e:
+            print(e)
+        cv2.imshow("Depth window", self.depth_color)
+        cv2.waitKey(30)
+
+
+if __name__ == "__main__":
+    print("reciving......")
+    rospy.init_node('image_converter', anonymous=True)
+    ic = image_converter()
+    try:
+        rospy.spin()
+    except KeyboardInterrupt:
+        print("Shutting down")
+    cv2.destroyAllWindows()
+
